@@ -30,9 +30,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        //lat-> 48.85391 lon-> 2.2913515
+        var eiffel = LatLng(48.85391,2.2913515)
+        mMap.addMarker(MarkerOptions().position(eiffel).title("Eiffel Tower"))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(eiffel,15f))
         // Add a marker in Sydney and move the camera
-        val sydney = LatLng(-34.0, 151.0)
-        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+//        val sydney = LatLng(-34.0, 151.0)
+//        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
     }
 }
