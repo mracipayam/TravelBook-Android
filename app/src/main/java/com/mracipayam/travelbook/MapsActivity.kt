@@ -1,6 +1,7 @@
 package com.mracipayam.travelbook
 
 import android.Manifest
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.LocationListener
 import android.location.LocationManager
@@ -11,12 +12,15 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.maps.CameraUpdateFactory
 
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import com.mracipayam.travelbook.databinding.ActivityMapsBinding
+import java.util.prefs.AbstractPreferences
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -25,6 +29,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationManager : LocationManager
     private lateinit var locationListener : LocationListener
     private lateinit var permissionLauncher : ActivityResultLauncher<String>
+    private lateinit var sharedPreferences: SharedPreferences
+    private var trackBoolean : Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +44,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         registerLauncher()
+
+        sharedPreferences = this.getSharedPreferences("com.mracipayam.travelbook", MODE_PRIVATE)
+        trackBoolean = false
+
     }
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -45,6 +55,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager
 
         locationListener = LocationListener {
+
+            trackBoolean = sharedPreferences.getBoolean("trackBoolean",false)
+            if(trackBoolean == false){
+                val userLocation = LatLng(it.latitude,it.longitude)
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation,15f))
+                sharedPreferences.edit().putBoolean("trackBoolean",true).apply()
+            }
+
 
         }
         if(ContextCompat.checkSelfPermission(this,android.Manifest.permission.ACCESS_FINE_LOCATION) !=
@@ -62,6 +80,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }else{
 
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0f,locationListener)
+            val lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            if(lastLocation != null){
+                val lastUserLocation = LatLng(lastLocation.latitude,lastLocation.longitude)
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastUserLocation,15f))
+            }
+            mMap.isMyLocationEnabled = true
         }
 
 
@@ -81,6 +105,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 if(ContextCompat.checkSelfPermission(this,android.Manifest.permission.ACCESS_FINE_LOCATION) ==
                     PackageManager.PERMISSION_GRANTED){
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0f,locationListener)
+                    val lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                    if(lastLocation != null){
+                        val lastUserLocation = LatLng(lastLocation.latitude,lastLocation.longitude)
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastUserLocation,15f))
+                    }
                 }
             }else{
                 Toast.makeText(this@MapsActivity,"Permission needed!",Toast.LENGTH_LONG).show()
